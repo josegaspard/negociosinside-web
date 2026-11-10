@@ -26,14 +26,29 @@
   if (hero) {
     const g = $('#khG'), ring = $('#khRing'), copy = $('#khCopy'), hint = $('#khHint');
     const slides = $$('.kh-slide');
-    let k = 0;
     const caps = $$('.kh-cap'), capsBox = $('#khCaps');
-    if (slides.length > 1 && !RM) setInterval(() => {
-      slides[k].classList.remove('on'); caps[k].classList.remove('on');
-      k = (k + 1) % slides.length;
-      slides[k].classList.add('on'); caps[k].classList.add('on');
-    }, 4200);
-    hero.classList.add('kh-intro');
+    let k = 0, timer = 0;
+    const show = (n) => {
+      if (n === k) return;
+      slides[k] && slides[k].classList.remove('on'); caps[k].classList.remove('on');
+      k = n; slides[k] && slides[k].classList.add('on'); caps[k].classList.add('on');
+      caps.forEach(c => c.tabIndex = capsBox.classList.contains('live') && c.classList.contains('on') ? 0 : -1);
+    };
+    const rotate = () => { if (!timer && slides.length > 1 && !RM) timer = setInterval(() => show((k + 1) % slides.length), 4200); };
+    /* vídeo dentro de la cerradura: un plano por episodio, sincronizado con el pie */
+    const vid = $('#khVid');
+    const conn = navigator.connection || {};
+    if (vid && !RM && !conn.saveData && !/(^|-)2g$/.test(conn.effectiveType || '')) {
+      const seg = +vid.dataset.seg || 4.2;
+      vid.src = innerWidth < 861 || /3g/.test(conn.effectiveType || '') ? vid.dataset.sm : vid.dataset.lg;
+      vid.addEventListener('playing', () => { clearInterval(timer); timer = 0; vid.classList.add('on'); }, { once: true });
+      vid.addEventListener('timeupdate', () => show(Math.min(caps.length - 1, Math.floor(vid.currentTime / seg))));
+      vid.addEventListener('error', rotate);
+      const tryPlay = () => vid.play().catch(rotate);
+      vid.readyState >= 2 ? tryPlay() : vid.addEventListener('canplay', tryPlay, { once: true });
+      new IntersectionObserver(([en]) => { if (!vid.classList.contains('on')) return; en.isIntersecting ? vid.play().catch(() => {}) : vid.pause(); }).observe(hero);
+      setTimeout(() => { if (!vid.classList.contains('on')) rotate(); }, 3500);
+    } else rotate();
     const ease = t => 1 - Math.pow(1 - t, 3);
     let ticking = false;
     const frame = () => {
@@ -70,21 +85,42 @@
     addEventListener('scroll', req, { passive: true }); addEventListener('resize', req); frame();
   }
 
-  /* aparición de rejillas (una sola vez) */
+  /* aparición de rejillas: el CSS ya las oculta desde el primer pintado (html.js) */
+  const RSEL = '.ep-grid > *, .clips > *, .temas > *, .offers > *, .steps > li, .stats > *, .nw-grid > *';
   if (!RM && 'IntersectionObserver' in window) {
-    const els = $$('.ep-grid > *, .clips > *, .temas > *, .offers > *, .steps > li');
-    els.forEach(el => el.classList.add('reveal'));
     const io = new IntersectionObserver((ents) => {
       ents.forEach(en => {
         if (!en.isIntersecting) return;
-        const sib = [...en.target.parentElement.children].filter(c => c.classList.contains('reveal') && !c.classList.contains('in'));
+        const sib = [...en.target.parentElement.children].filter(c => !c.classList.contains('in'));
         const i = Math.max(0, sib.indexOf(en.target));
         en.target.style.transitionDelay = Math.min(i, 6) * 70 + 'ms';
         en.target.classList.add('in'); io.unobserve(en.target);
       });
-    }, { rootMargin: '0px 0px -8% 0px' });
-    els.forEach(el => io.observe(el));
-  }
+    }, { rootMargin: '0px 0px -6% 0px' });
+    const watch = () => $$(RSEL).forEach(el => { if (!el.classList.contains('in') && !el._io) { el._io = 1; io.observe(el); } });
+    watch(); new MutationObserver(watch).observe(document.body, { childList: true, subtree: true });
+  } else document.documentElement.classList.add('rv-all');
+
+  /* cortinilla de entrada (solo la primera visita al inicio en la sesión) */
+  const intro = $('#intro');
+  if (intro && document.documentElement.classList.contains('intro-on')) {
+    const t0 = performance.now();
+    const poster = $('.kh-slide.on');
+    const ready = Promise.all([
+      document.fonts ? document.fonts.ready : 0,
+      poster && poster.decode ? poster.decode().catch(() => {}) : 0,
+    ]);
+    const end = () => {
+      if (intro.dataset.done) return; intro.dataset.done = 1;
+      const wait = Math.max(0, 650 - (performance.now() - t0));
+      setTimeout(() => {
+        document.documentElement.classList.add('intro-out');
+        setTimeout(() => { document.documentElement.classList.remove('intro-on', 'intro-out'); intro.hidden = true; }, 900);
+      }, wait);
+      try { sessionStorage.setItem('ni-intro', '1'); } catch (e) {}
+    };
+    ready.then(end); setTimeout(end, 1600);
+  } else if (intro) intro.hidden = true;
 
   /* reproductor en ventana (clips y shorts) */
   const dlg = $('#player'), frameBox = $('#playerFrame'), box = $('.player-box');
