@@ -131,7 +131,7 @@
   }).catch(() => {});
 
   /* ---------- portada de marca para noticias (sin fotos de terceros) ---------- */
-  const cover = (n, big) => `<span class="nw-cover s-${sk(n.sector)}${big ? ' big' : ''}" aria-hidden="true"><span class="nw-cover-k">${esc(sname(n.sector))}</span><svg viewBox="0 0 24 32"><circle cx="12" cy="10" r="7"/><path d="M8.6 14.5 6 29h12l-2.6-14.5z"/></svg></span>`;
+  const cover = (n, big) => `<span class="nw-cover s-${sk(n.sector)}${big ? ' big' : ''}" aria-hidden="true"><span class="nw-cover-k">${esc(sname(n.sector))}</span><svg viewBox="0 0 24 32"><path d="M8.34 15.97A7 7 0 1 1 15.66 15.97L18 29H6Z" stroke-linejoin="round"/></svg></span>`;
   const nwCard = (n, big) => `<a class="nw-card${big ? ' nw-big' : ''}" href="${B}noticias/articulo/?n=${encodeURIComponent(n.slug)}">${cover(n, big)}<span class="nw-body"><span class="nw-k">${esc(sname(n.sector))} · ${fdate(n.published_at || n.created_at)}</span><span class="nw-t">${esc(n.title)}</span>${n.dek ? `<span class="nw-d">${esc(n.dek)}</span>` : ''}</span></a>`;
   const NSEL = 'slug,title,dek,sector,published_at,created_at,source_name';
 
