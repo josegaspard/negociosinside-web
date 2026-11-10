@@ -657,3 +657,4 @@ svg.acc-ico{padding:5px;border:1.5px solid rgba(255,255,255,.3);fill:none;stroke
 .prof .form.prof-box{border:1px solid var(--line);padding:22px;border-radius:var(--r-lg);background:rgba(255,255,255,.03)}
 @media (max-width:1060px){.auth-side img{display:none}}
 .sec-shorts{padding-top:0}
+.pn-me .av-i{display:inline-grid;color:var(--navy);font-size:.85rem;margin:0}
