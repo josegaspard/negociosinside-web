@@ -655,3 +655,5 @@ svg.acc-ico{padding:5px;border:1.5px solid rgba(255,255,255,.3);fill:none;stroke
 @media (prefers-reduced-motion:reduce){.intro{display:none!important}}
 .auth-card .form,.prof .form,.pn .form,.form.ed{background:none;padding:0;border:0;border-radius:0}
 .prof .form.prof-box{border:1px solid var(--line);padding:22px;border-radius:var(--r-lg);background:rgba(255,255,255,.03)}
+@media (max-width:1060px){.auth-side img{display:none}}
+.sec-shorts{padding-top:0}
