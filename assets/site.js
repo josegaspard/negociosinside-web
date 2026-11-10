@@ -47,7 +47,7 @@
       vid.addEventListener('timeupdate', () => show(Math.min(caps.length - 1, Math.floor(vid.currentTime / seg))));
       vid.addEventListener('error', rotate);
       const tryPlay = () => vid.play().catch(rotate);
-      vid.readyState >= 2 ? tryPlay() : vid.addEventListener('canplay', tryPlay, { once: true });
+      vid.preload = 'auto'; tryPlay();
       new IntersectionObserver(([en]) => { if (!vid.classList.contains('on')) return; en.isIntersecting ? vid.play().catch(() => {}) : vid.pause(); }).observe(hero);
       setTimeout(() => { if (!vid.classList.contains('on')) rotate(); }, 3500);
     } else rotate();
