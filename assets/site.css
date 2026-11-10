@@ -658,3 +658,7 @@ svg.acc-ico{padding:5px;border:1.5px solid rgba(255,255,255,.3);fill:none;stroke
 @media (max-width:1060px){.auth-side img{display:none}}
 .sec-shorts{padding-top:0}
 .pn-me .av-i{display:inline-grid;color:var(--navy);font-size:.85rem;margin:0}
+.sec-news{padding-top:0}
+.sec-news .sec-hd p{margin:8px 0 0}
+.nw-secs{margin:0 0 28px}
+a.chip{text-decoration:none;display:inline-flex;align-items:center}

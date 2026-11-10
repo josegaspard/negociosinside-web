@@ -136,9 +136,13 @@
   const NSEL = 'slug,title,dek,sector,published_at,created_at,source_name';
 
   const teaser = $('[data-news-teaser]');
-  if (teaser) rest(`news?select=${NSEL}&status=eq.published&order=published_at.desc&limit=3`).then((r) => {
+  if (teaser) rest(`news?select=${NSEL}&status=eq.published&order=published_at.desc&limit=7`).then((r) => {
     if (!r.length) return;
-    $('.nw-grid', teaser).innerHTML = r.map((n) => nwCard(n)).join(''); teaser.hidden = false;
+    const secs = [...new Set(r.map((n) => sname(n.sector)))];
+    $('.nw-home', teaser).innerHTML = nwCard(r[0], true) + `<div class="nw-grid">${r.slice(1).map((n) => nwCard(n)).join('')}</div>`;
+    const chips = $('.nw-secs', teaser);
+    if (chips) chips.innerHTML = secs.map((x) => `<a class="chip" href="${B}noticias/#${encodeURIComponent(x)}">${esc(x)}</a>`).join('');
+    teaser.hidden = false;
   }).catch(() => {});
 
   const nlist = $('#newsList');
@@ -152,7 +156,8 @@
         const list = f ? r.filter((n) => sname(n.sector) === f) : r;
         nlist.innerHTML = nwCard(list[0], true) + `<div class="nw-grid">${list.slice(1).map((n) => nwCard(n)).join('')}</div>`;
       };
-      paint('');
+      const h0 = decodeURIComponent(location.hash.slice(1));
+      if (h0 && secs.includes(h0)) { $$('.chip', chipsBox).forEach((x) => x.setAttribute('aria-pressed', x.dataset.s === h0)); paint(h0); } else paint('');
       chipsBox.addEventListener('click', (e) => {
         const c = e.target.closest('.chip'); if (!c) return;
         $$('.chip', chipsBox).forEach((x) => x.setAttribute('aria-pressed', x === c));
