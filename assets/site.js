@@ -40,7 +40,9 @@
     const conn = navigator.connection || {};
     if (vid && !RM && !conn.saveData && !/(^|-)2g$/.test(conn.effectiveType || '')) {
       const seg = +vid.dataset.seg || 4.2;
-      vid.src = innerWidth < 861 || /3g/.test(conn.effectiveType || '') ? vid.dataset.sm : vid.dataset.lg;
+      let vs = innerWidth < 861 || /3g/.test(conn.effectiveType || '') ? vid.dataset.sm : vid.dataset.lg;
+      if (!vid.canPlayType('video/mp4; codecs="avc1.640028"')) vs = vs.replace('.mp4', '.webm');
+      vid.src = vs;
       vid.addEventListener('playing', () => { clearInterval(timer); timer = 0; vid.classList.add('on'); }, { once: true });
       vid.addEventListener('timeupdate', () => show(Math.min(caps.length - 1, Math.floor(vid.currentTime / seg))));
       vid.addEventListener('error', rotate);
