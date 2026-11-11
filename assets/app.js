@@ -128,7 +128,18 @@
       const step = (t) => { const p = Math.min(1, (t - t0) / 900); el.textContent = nf.format(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3)))); if (p < 1) requestAnimationFrame(step); };
       requestAnimationFrame(step);
     });
-    const up = $('[data-updated]', stats); if (up) up.textContent = 'Actualizado ' + ago(s.taken_at);
+    const so = s.social;
+    if (so && Array.isArray(so.redes)) {
+      const tot = so.redes.reduce((a, r) => a + (+r.valor || 0), 0) || 1;
+      so.redes.forEach((r) => {
+        const c = $(`[data-net="${r.id}"]`, stats); if (!c) return;
+        const v = +r.valor || 0; $('.net-v', c).textContent = nf.format(v);
+        $('.net-bar i', c).style.width = Math.max(1.5, 100 * v / tot).toFixed(1) + '%';
+        $('.net-p', c).textContent = `${(100 * v / tot).toFixed(1).replace('.', ',')} % del total${r.seguidores ? ' · ' + nf.format(r.seguidores) + ' seguidores' : ''}`;
+      });
+      const t = $('[data-total]', stats); if (t) t.textContent = nf.format(tot);
+      const pe = $('[data-periodo]', stats); if (pe && so.periodo) pe.textContent = String(so.periodo).toLowerCase();
+    }
   }).catch(() => {});
 
   /* ---------- portada de marca para noticias (sin fotos de terceros) ---------- */

@@ -60,13 +60,13 @@
       // caja visible del viewBox 1600x1000 con "slice"
       const s = Math.max(vw / 1600, vh / 1000);
       const visW = vw / s, visH = vh / s, x0v = (1600 - visW) / 2, y0v = (1000 - visH) / 2;
+      const base = mob ? visW * 0.66 / 240 : visH / 615;
       const bx = mob ? 800 : x0v + visW * 0.74;
-      const by = mob ? y0v + visH * 0.25 : 440;
-      const base = mob ? 0.4 : 1.05;
+      const by = mob ? y0v + visH * 0.1 + 180 * base : y0v + visH * 0.54 - 60 * base;
       const span = hero.offsetHeight - vh;
       const p = RM ? 0 : Math.min(1, Math.max(0, scrollY / span));
       const e = ease(p);
-      const sc = base * (1 + Math.pow(p, 2.1) * 42);
+      const sc = base * (1 + Math.pow(p, 2.1) * 26);
       const x = bx + (800 - bx) * e, y = by + (470 - by) * e;
       g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc.toFixed(3)})`);
       ring.setAttribute('transform', g.getAttribute('transform'));
@@ -140,9 +140,16 @@
     if (b) { e.preventDefault(); openPlayer(b.dataset.yt, b.dataset.short); }
   });
 
+  /* reels de Instagram: se cargan al pulsar */
+  $$('.reel-go').forEach(b => b.addEventListener('click', () => {
+    const r = b.closest('.reel');
+    r.innerHTML = `<iframe src="https://www.instagram.com/reel/${r.dataset.reel}/embed/" title="Reel de Negocios Inside en Instagram" allowtransparency="true" allow="encrypted-media; fullscreen"></iframe>`;
+    r.classList.add('on');
+  }));
+
   /* carrusel de shorts */
   const car = $('#shorts');
-  $$('[data-car]').forEach(b => b.addEventListener('click', () => car.scrollBy({ left: +b.dataset.car * car.clientWidth * 0.8, behavior: RM ? 'auto' : 'smooth' })));
+  if (car) $$('[data-car]').forEach(b => b.addEventListener('click', () => car.scrollBy({ left: +b.dataset.car * car.clientWidth * 0.8, behavior: RM ? 'auto' : 'smooth' })));
 
   /* episodio: vídeo ligero + capítulos */
   const lite = $('#lite');
