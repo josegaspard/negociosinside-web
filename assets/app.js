@@ -288,7 +288,7 @@
     let mode = 'in';
     const paintOut = (msg) => {
       acct.innerHTML = `<div class="auth">
-        <div class="auth-side"><img src="${B}img/logo.webp" alt="" width="150" height="48"><h1>Entra en Negocios Inside</h1><ul class="ticks"><li>Comenta los episodios y las noticias</li><li>Recibe la newsletter con lo mejor de la semana</li><li>Propón tu empresa para el próximo episodio</li></ul></div>
+        <div class="auth-side"><img src="${B}img/logo-n.webp" alt="" width="150" height="48"><h1>Entra en Negocios Inside</h1><ul class="ticks"><li>Comenta los episodios y las noticias</li><li>Recibe la newsletter con lo mejor de la semana</li><li>Propón tu empresa para el próximo episodio</li></ul></div>
         <div class="auth-card">
           ${msg ? `<p class="auth-msg">${msg}</p>` : ''}
           <div class="sbtns sbtns-col">${socialBtns(volver)}</div>
