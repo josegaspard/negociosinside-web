@@ -662,3 +662,10 @@ svg.acc-ico{padding:5px;border:1.5px solid rgba(255,255,255,.3);fill:none;stroke
 .sec-news .sec-hd p{margin:8px 0 0}
 .nw-secs{margin:0 0 28px}
 a.chip{text-decoration:none;display:inline-flex;align-items:center}
+.nw-cover.has-img:before{display:none}
+.nw-cover.has-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.nw-cover.has-img:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,27,51,.35),transparent 40%)}
+.nw-cover.has-img .nw-cover-k{z-index:1}
+.nw-card:hover .nw-cover.has-img img{transform:scale(1.05)}
+.nw-cover.big.has-img{aspect-ratio:3/2}
+.img-credit{margin:-18px 0 26px;color:var(--mist-2);font-size:.82rem}.img-credit a{color:var(--mist)}
