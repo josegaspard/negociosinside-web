@@ -115,7 +115,8 @@
 
   /* ---------- métricas del podcast (inicio) ---------- */
   const stats = $('[data-stats]');
-  if (stats) rest('podcast_stats?select=subscribers,views,videos,shorts,taken_at,data&order=taken_at.desc&limit=1').then(([s]) => {
+  if (stats) fetch(`${B}data/stats.json?t=${Math.floor(Date.now() / 36e5)}`).then((r) => { if (!r.ok) throw 0; return r.json(); }).then((x) => [x])
+    .catch(() => rest('podcast_stats?select=subscribers,views,videos,shorts,taken_at,data&order=taken_at.desc&limit=1')).then(([s]) => {
     if (!s) return;
     const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
     ['subscribers', 'views', 'videos', 'shorts'].forEach((k) => {
@@ -132,11 +133,14 @@
 
   /* ---------- portada de marca para noticias (sin fotos de terceros) ---------- */
   const cover = (n, big) => `<span class="nw-cover s-${sk(n.sector)}${big ? ' big' : ''}" aria-hidden="true"><span class="nw-cover-k">${esc(sname(n.sector))}</span><svg viewBox="0 0 24 32"><path d="M8.34 15.97A7 7 0 1 1 15.66 15.97L18 29H6Z" stroke-linejoin="round"/></svg></span>`;
-  const nwCard = (n, big) => `<a class="nw-card${big ? ' nw-big' : ''}" href="${B}noticias/articulo/?n=${encodeURIComponent(n.slug)}">${cover(n, big)}<span class="nw-body"><span class="nw-k">${esc(sname(n.sector))} · ${fdate(n.published_at || n.created_at)}</span><span class="nw-t">${esc(n.title)}</span>${n.dek ? `<span class="nw-d">${esc(n.dek)}</span>` : ''}</span></a>`;
+  const nwCard = (n, big) => `<a class="nw-card${big ? ' nw-big' : ''}" href="${B}noticias/${encodeURIComponent(n.slug)}/">${cover(n, big)}<span class="nw-body"><span class="nw-k">${esc(sname(n.sector))} · ${fdate(n.published_at || n.created_at)}</span><span class="nw-t">${esc(n.title)}</span>${n.dek ? `<span class="nw-d">${esc(n.dek)}</span>` : ''}</span></a>`;
   const NSEL = 'slug,title,dek,sector,published_at,created_at,source_name';
+  let newsP = null;
+  const getNews = () => newsP || (newsP = fetch(`${B}data/news.json?t=${Math.floor(Date.now() / 3e5)}`).then((r) => { if (!r.ok) throw 0; return r.json(); })
+    .catch(() => rest(`news?select=${NSEL}&status=eq.published&order=published_at.desc&limit=200`)));
 
   const teaser = $('[data-news-teaser]');
-  if (teaser) rest(`news?select=${NSEL}&status=eq.published&order=published_at.desc&limit=7`).then((r) => {
+  if (teaser) getNews().then((r) => { r = r.slice(0, 7);
     if (!r.length) return;
     const secs = [...new Set(r.map((n) => sname(n.sector)))];
     $('.nw-home', teaser).innerHTML = nwCard(r[0], true) + `<div class="nw-grid">${r.slice(1).map((n) => nwCard(n)).join('')}</div>`;
@@ -148,7 +152,7 @@
   const nlist = $('#newsList');
   if (nlist) {
     const chipsBox = $('#newsChips');
-    rest(`news?select=${NSEL}&status=eq.published&order=published_at.desc&limit=90`).then((r) => {
+    getNews().then((r) => {
       if (!r.length) { nlist.innerHTML = '<p class="empty">Aún no hay noticias publicadas. Vuelve pronto.</p>'; return; }
       const secs = [...new Set(r.map((n) => sname(n.sector)))];
       chipsBox.innerHTML = '<button class="chip" aria-pressed="true" data-s="">Todas</button>' + secs.map((s) => `<button class="chip" aria-pressed="false" data-s="${esc(s)}">${esc(s)}</button>`).join('');
@@ -183,7 +187,8 @@
   };
 
   const art = $('#newsArt');
-  if (art) {
+  if (art && !art.dataset.static && qs.get('n')) { location.replace(`${B}noticias/${encodeURIComponent(qs.get('n'))}/`); }
+  else if (art && !art.dataset.static) {
     const slug = qs.get('n') || '';
     rest(`news?select=*&slug=eq.${encodeURIComponent(slug)}&status=eq.published&limit=1`).then(async ([n]) => {
       if (!n) { art.innerHTML = `<div class="wrap pg-hd"><h1>Noticia no encontrada</h1><p>Puede que se haya movido. <a class="lnk" href="${B}noticias/">Ver todas las noticias</a></p></div>`; return; }
