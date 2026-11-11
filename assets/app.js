@@ -1,4 +1,4 @@
-/* Negocios Inside · cuenta, comentarios, noticias, newsletter, métricas y panel */
+/* Negocios Inside · cuenta, noticias, newsletter, métricas y panel */
 (() => {
   const C = window.NI_CFG || {};
   if (!C.api || !C.anon) return;
@@ -113,6 +113,26 @@
     btn.disabled = false;
   }));
 
+  /* ---------- «¿Quieres que visitemos tu empresa?» → Prospección del panel ---------- */
+  const vf = $('#visitF');
+  if (vf) vf.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const v = (n) => (vf.elements[n].value || '').trim(), out = $('#visitMsg'), btn = $('button', vf);
+    const bad = ['nombre', 'empresa'].find((n) => !v(n)) || (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email')) && 'email');
+    if (bad) { out.className = 'nl-msg bad'; out.textContent = bad === 'email' ? 'Escribe un correo válido.' : 'Falta tu nombre o el de la empresa.'; vf.elements[bad].focus(); return; }
+    btn.disabled = true;
+    try {
+      const r = await rest('rpc/request_visit', { method: 'POST', body: JSON.stringify({ p_nombre: v('nombre'), p_empresa: v('empresa'), p_email: v('email'), p_telefono: v('telefono') || null, p_ciudad: v('ciudad') || null, p_mensaje: v('mensaje') || null }) });
+      if (r === 'ok' || r === 'ya') { out.className = 'nl-msg ok'; out.textContent = '¡Recibido! Te escribimos en unos días para conocer tu empresa.'; vf.reset(); }
+      else { out.className = 'nl-msg bad'; out.textContent = r === 'email_invalido' ? 'Revisa el correo.' : 'Revisa los datos e inténtalo de nuevo.'; }
+    } catch {
+      const body = encodeURIComponent(`Nombre: ${v('nombre')}\nEmpresa: ${v('empresa')}\nCorreo: ${v('email')}\nTeléfono: ${v('telefono')}\nCiudad: ${v('ciudad')}\n\n${v('mensaje')}`);
+      location.href = `mailto:${C.mail}?subject=${encodeURIComponent('Visita a mi empresa: ' + v('empresa'))}&body=${body}`;
+      out.className = 'nl-msg ok'; out.textContent = 'Se ha abierto tu correo con la solicitud lista para enviar.';
+    }
+    btn.disabled = false;
+  });
+
   /* ---------- métricas del podcast (inicio) ---------- */
   const stats = $('[data-stats]');
   if (stats) fetch(`${B}data/stats.json?t=${Math.floor(Date.now() / 36e5)}`).then((r) => { if (!r.ok) throw 0; return r.json(); }).then((x) => [x])
@@ -209,21 +229,22 @@
         <h1>${esc(n.title)}</h1>${n.dek ? `<p class="epi-lead">${esc(n.dek)}</p>` : ''}<p class="art-meta">Redacción Negocios Inside · ${fdate(n.published_at || n.created_at)}</p></div>
         <div class="wrap art-grid"><div class="art-main">${cover(n, 1)}<div class="prose">${clean(n.body_html)}</div>
         ${n.source_url ? `<p class="art-src">Fuente: <a href="${esc(n.source_url)}" rel="noopener nofollow" target="_blank">${esc(n.source_name || new URL(n.source_url).hostname)}</a></p>` : ''}
-        <section class="epi-sec" id="comentarios"><h2>Comentarios</h2><div data-comments data-page="noticias/${esc(n.slug)}"></div></section></div>
-        <aside class="epi-side"><div class="side-box nl-side"><h2>La newsletter</h2><p>Lo mejor de la semana en negocios, en tu correo. Gratis.</p><form data-nl="noticia" novalidate><label class="sr" for="nlA">Correo</label><input id="nlA" type="email" placeholder="tu@correo.com" autocomplete="email" required><button class="btn btn-y btn-sm">Suscribirme</button><p class="nl-msg" aria-live="polite"></p></form></div>
+        <form class="nl-line" data-nl="noticia" novalidate><p><b>La newsletter de Negocios Inside.</b> El episodio nuevo y las noticias de la semana, en un correo semanal.</p><div class="row"><label class="sr" for="nlA">Tu correo</label><input id="nlA" type="email" placeholder="tu@correo.com" autocomplete="email" required><button class="btn btn-n btn-sm">Suscribirme</button></div><p class="nl-msg" aria-live="polite"></p></form></div>
+        <aside class="epi-side">
         <div class="side-cta"><p>¿Tu empresa tiene algo que contar?</p><a class="btn btn-y" href="${B}contacto/">Propón tu empresa</a></div></aside></div>`;
       $$('form[data-nl]', art).forEach((f) => f.addEventListener('submit', async (e) => {
         e.preventDefault(); const em = $('input', f), out = $('.nl-msg', f);
         try { await rest('rpc/subscribe', { method: 'POST', body: JSON.stringify({ p_email: em.value.trim(), p_name: '', p_source: 'noticia' }) }); out.className = 'nl-msg ok'; out.textContent = 'Listo, suscrito.'; f.reset(); } catch { out.className = 'nl-msg bad'; out.textContent = 'Revisa el correo.'; }
       }));
-      initComments($('[data-comments]', art));
       const more = await rest(`news?select=${NSEL}&status=eq.published&slug=neq.${encodeURIComponent(slug)}&order=published_at.desc&limit=3`).catch(() => []);
       if (more.length) art.insertAdjacentHTML('beforeend', `<section class="sec sec-tight"><div class="wrap"><h2 class="h-sm">Más noticias</h2><div class="nw-grid">${more.map((m) => nwCard(m)).join('')}</div></div></section>`);
     }).catch(() => { art.innerHTML = '<div class="wrap pg-hd"><h1>No se pudo cargar</h1><p>Recarga la página en un momento.</p></div>'; });
   }
 
   /* ---------- comentarios ---------- */
+  /* 11-nov: comentarios desactivados en toda la web (pedido de Pablo); si queda algún contenedor, se quita */
   function initComments(box) {
+    if (box) { (box.closest('.epi-sec') || box).remove(); return; }
     if (!box || box.dataset.ready) return; box.dataset.ready = 1;
     const page = box.dataset.page;
     box.innerHTML = `<div class="cm-form-wrap"></div><ol class="cm-list" aria-live="polite"><li class="cm-sk"></li><li class="cm-sk"></li></ol>`;
@@ -288,7 +309,7 @@
     let mode = 'in';
     const paintOut = (msg) => {
       acct.innerHTML = `<div class="auth">
-        <div class="auth-side"><img src="${B}img/logo-n.webp" alt="" width="150" height="48"><h1>Entra en Negocios Inside</h1><ul class="ticks"><li>Comenta los episodios y las noticias</li><li>Recibe la newsletter con lo mejor de la semana</li><li>Propón tu empresa para el próximo episodio</li></ul></div>
+        <div class="auth-side"><img src="${B}img/logo-n.webp" alt="" width="150" height="48"><h1>Entra en Negocios Inside</h1><ul class="ticks"><li>Recibe la newsletter con lo mejor de la semana</li><li>Propón tu empresa para el próximo episodio</li></ul></div>
         <div class="auth-card">
           ${msg ? `<p class="auth-msg">${msg}</p>` : ''}
           <div class="sbtns sbtns-col">${socialBtns(volver)}</div>
@@ -312,9 +333,9 @@
         <div class="prof-hd">${avatar(p.avatar_url, n, 'av-lg')}<div><h1>Hola, ${esc(n.split(' ')[0])}</h1><p class="muted">${esc(me.user.email || '')} · entras con ${prov === 'google' ? 'Google' : prov === 'x' || prov === 'twitter' ? 'X' : 'correo'}</p></div></div>
         ${safeBack(volver) ? `<a class="btn btn-y" href="${esc(safeBack(volver))}">Volver a donde estabas</a>` : ''}
         <div class="prof-grid">
-          <form class="form prof-box" id="pf"><h2>Tu perfil</h2><div class="f"><label for="p-n">Nombre que se ve en tus comentarios</label><input id="p-n" value="${esc(p.display_name || '')}" maxlength="60" required></div><button class="btn btn-y btn-sm">Guardar</button></form>
+          <form class="form prof-box" id="pf"><h2>Tu perfil</h2><div class="f"><label for="p-n">Tu nombre</label><input id="p-n" value="${esc(p.display_name || '')}" maxlength="60" required></div><button class="btn btn-y btn-sm">Guardar</button></form>
           <div class="prof-box"><h2>Newsletter</h2><label class="sw"><input type="checkbox" id="p-nl" ${p.newsletter !== false ? 'checked' : ''}><span class="sw-ui" aria-hidden="true"></span><span>Recibir la newsletter de Negocios Inside</span></label><p class="muted">Una vez a la semana, como mucho. Te das de baja cuando quieras.</p></div>
-          ${me.admin ? `<div class="prof-box prof-admin"><h2>Panel de Negocios Inside</h2><p class="muted">Noticias, comentarios, newsletter, usuarios y métricas.</p><a class="btn btn-y btn-sm" href="${B}panel/">Abrir el panel</a></div>` : ''}
+          ${me.admin ? `<div class="prof-box prof-admin"><h2>Panel de Negocios Inside</h2><p class="muted">Podcast, noticias, newsletter, usuarios y métricas.</p><a class="btn btn-y btn-sm" href="${B}panel/">Abrir el panel</a></div>` : ''}
         </div>
         <button class="btn btn-o btn-sm" id="logout">Cerrar sesión</button></div>`;
       $('#pf').addEventListener('submit', async (e) => {

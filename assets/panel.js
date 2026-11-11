@@ -10,8 +10,8 @@ export default async function panel(K) {
   if (!me.admin) { root.innerHTML = `<div class="pg-hd"><h1>Sin acceso</h1><p>Tu cuenta (${esc(me.user.email)}) no es administradora de Negocios Inside.</p><a class="btn btn-o" href="${C.base}">Ir al inicio</a></div>`; return; }
 
   document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="' + C.base + 'assets/dash.css?v=' + C.v + '">');
-  const GROUPS = [['Podcast', [['podcast', 'Inicio'], ['prospeccion', 'Prospección'], ['calendario', 'Calendario'], ['produccion', 'Producción'], ['finanzas', 'Finanzas'], ['objetivos', 'Objetivos'], ['informes', 'Informes'], ['redes', 'Redes']]],
-    ['Web', [['resumen', 'Resumen'], ['noticias', 'Noticias'], ['comentarios', 'Comentarios'], ['newsletter', 'Newsletter'], ['usuarios', 'Usuarios']]]];
+  const GROUPS = [['Podcast', [['podcast', 'Inicio'], ['prospeccion', 'Prospección'], ['calendario', 'Calendario'], ['produccion', 'Producción'], ['finanzas', 'Finanzas'], ['objetivos', 'Objetivos'], ['informes', 'Informes'], ['episodios', 'Episodios nuevos'], ['redes', 'Redes']]],
+    ['Web', [['resumen', 'Resumen'], ['noticias', 'Noticias'], ['newsletter', 'Newsletter'], ['usuarios', 'Usuarios']]]];
   root.innerHTML = `<div class="pn">
     <aside class="pn-side"><div class="pn-me">${avatar(me.profile.avatar_url, me.profile.display_name)}<div><b>${esc(me.profile.display_name || me.user.email)}</b><span>Administrador</span></div></div>
       <nav class="pn-nav" aria-label="Secciones del panel">${GROUPS.map(([g, tabs]) => `<span class="pn-g">${g}</span>` + tabs.map(([k, n]) => `<a href="#${k}" data-tab="${k}">${n}</a>`).join('')).join('')}</nav>
@@ -34,7 +34,7 @@ export default async function panel(K) {
       <div class="kpis">${kpi('Suscriptores', nf.format(last.subscribers ?? 0), diff('subscribers'))}${kpi('Visualizaciones', nf.format(last.views ?? 0), diff('views'))}${kpi('Vídeos', nf.format(last.videos ?? 0))}${kpi('Shorts', nf.format(last.shorts ?? 0))}</div>
       <p class="muted">Datos de ${last.taken_at ? ago(last.taken_at) : '—'}. Se actualizan cada día.</p>
       <h2 class="pn-h">La web</h2>
-      <div class="kpis">${kpi('Usuarios', nf.format(o.users_total ?? o.usuarios ?? 0), `${nf.format(o.users_7d ?? o.altas_7d ?? 0)} nuevos en 7 días`)}${kpi('Suscriptores newsletter', nf.format(o.subscribers_active ?? o.suscriptores ?? 0))}${kpi('Comentarios 7 días', nf.format(o.comments_7d ?? o.comentarios_7d ?? 0))}${kpi('Noticias', nf.format(o.news_published ?? o.noticias_publicadas ?? 0), `${nf.format(o.news_draft ?? o.noticias_borrador ?? 0)} por revisar`)}</div>
+      <div class="kpis">${kpi('Usuarios', nf.format(o.users_total ?? o.usuarios ?? 0), `${nf.format(o.users_7d ?? o.altas_7d ?? 0)} nuevos en 7 días`)}${kpi('Suscriptores newsletter', nf.format(o.subscribers_active ?? o.suscriptores ?? 0))}${kpi('Noticias', nf.format(o.news_published ?? o.noticias_publicadas ?? 0), `${nf.format(o.news_draft ?? o.noticias_borrador ?? 0)} por revisar`)}</div>
       ${Object.keys(prov).length ? `<p class="pn-prov">${Object.entries(prov).map(([k, v]) => `<span>${esc(k === 'email' ? 'Correo' : k === 'google' ? 'Google' : k === 'x' || k === 'twitter' ? 'X' : k)}: <b>${nf.format(v)}</b></span>`).join('')}</p>` : ''}
       ${latest.length ? `<h2 class="pn-h">Últimos vídeos</h2><table class="tbl"><thead><tr><th>Vídeo</th><th>Tipo</th><th class="r">Vistas</th></tr></thead><tbody>${latest.map((v) => `<tr><td><a href="https://www.youtube.com/${v.is_short ? 'shorts/' : 'watch?v='}${esc(v.id)}" target="_blank" rel="noopener">${esc(String(v.title).replace(/#\S+/g, '').trim())}</a></td><td>${v.is_short ? 'Short' : 'Vídeo'}</td><td class="r">${nf.format(v.views || 0)}</td></tr>`).join('')}</tbody></table>` : ''}`;
   }
@@ -84,25 +84,6 @@ export default async function panel(K) {
       const { error } = await s.from('news').update(patch).eq('id', id);
       if (error) toast(errMsg(error), 1); else { toast(pubNow ? 'Guardada y publicada' : 'Guardada'); noticias(); }
     });
-  }
-
-  /* ---------- comentarios ---------- */
-  async function comentarios() {
-    const rows = await q(s.from('comments').select('id,page,body,status,created_at,profiles(display_name,email,avatar_url)').order('created_at', { ascending: false }).limit(200));
-    const pageUrl = (p) => p.startsWith('noticias/') ? `${C.base}noticias/articulo/?n=${encodeURIComponent(p.slice(9))}` : `${C.base}${p}/`;
-    main.innerHTML = `<h1>Comentarios</h1><p class="muted">Los últimos 200. Ocultar lo quita de la web sin borrarlo.</p>
-      <ul class="cms-adm">${rows.map((c) => `<li class="${c.status === 'hidden' ? 'off' : ''}">${avatar(c.profiles?.avatar_url, c.profiles?.display_name)}<div class="cm-b"><div class="cm-h"><b>${esc(c.profiles?.display_name || '—')}</b><span class="muted">${esc(c.profiles?.email || '')}</span><time>${ago(c.created_at)}</time></div><p>${esc(c.body)}</p><a class="muted" href="${pageUrl(c.page)}#comentarios" target="_blank">${esc(c.page)}</a></div>
-        <div class="nr-a">${c.status === 'hidden' ? `<button class="btn btn-o btn-sm" data-show="${c.id}">Mostrar</button>` : `<button class="btn btn-o btn-sm" data-hide="${c.id}">Ocultar</button>`}<button class="btn btn-o btn-sm" data-delc="${c.id}">Borrar</button></div></li>`).join('') || '<li class="empty">Aún no hay comentarios.</li>'}</ul>`;
-    main.onclick = async (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.delc) {
-        if (!(await ask('¿Borrar el comentario?', 'Se elimina para siempre, con sus respuestas.', 'Borrar', 1))) return;
-        const { error } = await s.from('comments').delete().eq('id', b.dataset.delc); if (error) return toast(errMsg(error), 1);
-      } else if (b.dataset.hide || b.dataset.show) {
-        const { error } = await s.from('comments').update({ status: b.dataset.hide ? 'hidden' : 'visible' }).eq('id', b.dataset.hide || b.dataset.show); if (error) return toast(errMsg(error), 1);
-      } else return;
-      toast('Hecho'); comentarios();
-    };
   }
 
   /* ---------- newsletter ---------- */
@@ -539,7 +520,7 @@ export default async function panel(K) {
     const row = await q(T('settings').select('value').eq('key', 'social_stats').maybeSingle());
     const v = row?.value || { periodo: 'Último mes', redes: [] };
     const tot = () => $$('[data-rv]', main).reduce((a, i) => a + (+i.value || 0), 0);
-    main.innerHTML = `<h1>Redes</h1><p class="muted">Estas cifras son las que salen en «El podcast en números» de la web. YouTube se puede leer solo; Instagram, TikTok y LinkedIn no dan sus estadísticas sin acceso a la cuenta, así que cópialas aquí una vez al mes desde las estadísticas de cada app.</p>
+    main.innerHTML = `<h1>Redes</h1><p class="muted">Estas cifras son las que salen en «El podcast en números» de la web. YouTube se lee solo cada día. Instagram y TikTok se leerán solos cada mañana en cuanto la cuenta dé acceso (Meta Business y TikTok); mientras tanto, y para LinkedIn, cópialas aquí una vez al mes desde las estadísticas de cada app.${(v.auto || []).length ? ` <b>Automáticas ahora: ${esc(v.auto.join(', '))}.</b>` : ''}</p>
       <form class="form ed" id="rdF"><div class="d-2"><div class="f"><label for="rdP">Periodo</label><input id="rdP" value="${esc(v.periodo || '')}" placeholder="Último mes"></div><div class="f"><label for="rdF2">Fuente (se ve pequeño en la web)</label><input id="rdF2" value="${esc(v.fuente || '')}"></div></div>
       <table class="tbl d-tbl"><thead><tr><th>Red</th><th>Usuario</th><th>Enlace</th><th>Qué se mide</th><th class="r">Cifra</th><th class="r">Seguidores</th></tr></thead><tbody>
       ${(v.redes || []).map((r, i) => `<tr><td><b>${esc(r.nombre)}</b></td><td><input class="d-in" data-i="${i}" data-k="handle" value="${esc(r.handle || '')}" aria-label="Usuario en ${esc(r.nombre)}"></td><td><input class="d-in" data-i="${i}" data-k="url" value="${esc(r.url || '')}" aria-label="Enlace de ${esc(r.nombre)}"></td><td><input class="d-in d-in-s" data-i="${i}" data-k="metrica" value="${esc(r.metrica || '')}" aria-label="Métrica de ${esc(r.nombre)}"></td><td class="r"><input class="d-in d-in-n" type="number" min="0" data-rv data-i="${i}" data-k="valor" value="${r.valor ?? ''}" aria-label="Cifra de ${esc(r.nombre)}"></td><td class="r"><input class="d-in d-in-n" type="number" min="0" data-i="${i}" data-k="seguidores" value="${r.seguidores ?? ''}" aria-label="Seguidores en ${esc(r.nombre)}"></td></tr>`).join('')}
@@ -553,6 +534,24 @@ export default async function panel(K) {
       $$('[data-i]', main).forEach((i) => { const r = nv.redes[+i.dataset.i]; const k = i.dataset.k; r[k] = (k === 'valor' || k === 'seguidores') ? (i.value === '' ? null : Math.round(+i.value)) : i.value.trim(); });
       const { error } = await T('settings').upsert({ key: 'social_stats', value: nv }); if (error) return toast(errMsg(error), 1); toast('Cifras guardadas'); redes();
     });
+  }
+
+  /* ---------- episodios nuevos (vigía del canal de YouTube cada 2 h) ---------- */
+  async function episodios() {
+    const rows = await q(T('episode_drafts').select('*').order('created_at', { ascending: false }).limit(60));
+    const nuevos = rows.filter((r) => r.status === 'borrador');
+    const TIPO = { episodio: 'Episodio', clip: 'Clip', short: 'Short' };
+    const card = (r) => `<li class="${r.status === 'borrador' ? '' : 'off'}"><img src="${esc(r.thumb)}" alt="" width="120" height="68" loading="lazy" style="border-radius:8px;object-fit:cover"><div class="cm-b"><div class="cm-h"><span class="pill">${TIPO[r.tipo] || r.tipo}</span><b><a href="https://www.youtube.com/${r.es_short ? 'shorts/' : 'watch?v='}${esc(r.video_id)}" target="_blank" rel="noopener">${esc(r.title)}</a></b></div><span class="muted">${r.duracion ? Math.round(r.duracion / 60) + ' min · ' : ''}detectado ${ago(r.created_at)} · ${r.status === 'borrador' ? 'por revisar' : r.status === 'publicado' ? 'ya en la web' : 'descartado'}</span></div>
+      ${r.status === 'borrador' ? `<div class="nr-a"><button class="btn btn-y btn-sm" data-ep-ok="${esc(r.video_id)}">Ya está en la web</button><button class="btn btn-o btn-sm" data-ep-no="${esc(r.video_id)}">Descartar</button></div>` : ''}</li>`;
+    main.innerHTML = `<h1>Episodios nuevos</h1><p class="muted">Cada 2 horas se mira el canal de YouTube. Lo nuevo aparece aquí como borrador: los episodios largos se montan en la web con su página (capítulos, transcripción y clips) y los clips y shorts se añaden a su episodio. Nada se publica solo.</p>
+      <h2 class="pn-h">Por revisar (${n0(nuevos.length)})</h2>${nuevos.length ? `<ul class="cms-adm">${nuevos.map(card).join('')}</ul>` : '<p class="empty">No hay vídeos nuevos. Cuando subáis uno, saldrá aquí.</p>'}
+      <h2 class="pn-h">Últimos vistos</h2><ul class="cms-adm">${rows.filter((r) => r.status !== 'borrador').slice(0, 20).map(card).join('')}</ul>`;
+    main.onclick = async (e) => {
+      const b = e.target.closest('[data-ep-ok],[data-ep-no]'); if (!b) return;
+      const id = b.dataset.epOk || b.dataset.epNo;
+      const { error } = await T('episode_drafts').update({ status: b.dataset.epOk ? 'publicado' : 'descartado' }).eq('video_id', id);
+      if (error) return toast(errMsg(error), 1); toast('Hecho'); episodios();
+    };
   }
 
   /* ---------- informes ---------- */
@@ -638,7 +637,7 @@ export default async function panel(K) {
     $('#rpX', ov).onclick = close; $('#rpPrint', ov).onclick = () => print();
   }
 
-  const views = { podcast, prospeccion, calendario, produccion, finanzas, objetivos, informes, redes, resumen, noticias, comentarios, newsletter, usuarios };
+  const views = { podcast, prospeccion, calendario, produccion, finanzas, objetivos, informes, episodios, redes, resumen, noticias, newsletter, usuarios };
   const go = async () => {
     const k = (location.hash.slice(1) || 'podcast'); const v = views[k] ? k : 'podcast';
     $$('.pn-nav a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.tab === v));

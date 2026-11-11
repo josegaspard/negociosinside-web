@@ -917,3 +917,27 @@ a.chip{color:var(--ink-2)}
 @media (max-width:600px){.nets{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:860px){.kh-copy .cta-row .btn{flex:1 1 0;padding:0 8px}}
 @media (max-width:600px){.proof2-nums{grid-template-columns:1fr 1fr}.proof2-nums b{font-size:1.35rem}}
+
+/* =========================================================
+   11-nov tarde · newsletter discreta + «Nuestro podcast»
+   ========================================================= */
+.nl-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 22px;margin-top:28px;padding:14px 0 0;border-top:1px solid var(--bd)}
+.nl-line p{margin:0;color:var(--ink-2);font-size:.95rem}
+.nl-line p b{color:var(--ink)}
+.nl-line .row{display:flex;gap:8px;flex:0 1 380px;min-width:min(100%,280px)}
+.nl-line input{flex:1;min-width:0;min-height:42px;font:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1.5px solid var(--bd);border-radius:10px;padding:0 12px}
+.nl-line input:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,95,191,.15)}
+.nl-line .btn-n{background:var(--navy);color:#fff}
+.nl-line .nl-msg{flex-basis:100%;font-size:.88rem;margin:0}
+.nl-line .nl-msg:empty{display:none}
+.np-emps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.np-emp{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;padding:10px;border:1px solid var(--bd);border-radius:14px;color:var(--ink);text-decoration:none;transition:border-color .2s,transform .2s}
+.np-emp:hover{border-color:var(--navy);transform:translateY(-2px)}
+.np-emp img{width:96px;aspect-ratio:16/9;height:auto;object-fit:cover;border-radius:8px}
+.np-emp span{display:grid;gap:2px}
+.np-emp .muted{font-size:.85rem}
+.fmts-3{grid-template-columns:repeat(3,1fr)}
+.np-note{margin-top:22px;color:var(--ink-2)}
+.np-visit{align-items:start}
+.np-visit .form{background:rgba(255,255,255,.06)}
+@media (max-width:860px){.fmts-3{grid-template-columns:1fr}.np-visit{grid-template-columns:1fr}}
