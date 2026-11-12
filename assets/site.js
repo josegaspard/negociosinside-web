@@ -215,17 +215,18 @@
     const setErr = (inp, id, msg) => { $(id).textContent = msg; inp.setAttribute('aria-invalid', msg ? 'true' : 'false'); if (msg) inp.setAttribute('aria-describedby', id.slice(1)); };
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const n = $('#f-n'), t = $('#f-t'), em = $('#f-e'), c = $('#f-c');
+      const n = $('#f-n'), t = $('#f-t'), em = $('#f-e'), c = $('#f-c'), as = $('#f-a');
       const ve = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()), vt = t.value.replace(/\D/g, '').length >= 7;
       setErr(n, '#e-n', n.value.trim() ? '' : 'Escribe tu nombre.');
       setErr(t, '#e-t', vt ? '' : 'Escribe un teléfono válido.');
       setErr(em, '#e-e', ve ? '' : 'Escribe un correo válido.');
       setErr(c, '#e-c', c.value.trim() ? '' : 'Escribe el nombre de tu empresa.');
+      setErr(as, '#e-a', as.value.trim() ? '' : 'Cuéntanos el asunto en una línea.');
       const bad = $('[aria-invalid=true]', form); if (bad) { bad.focus(); return; }
       const btn = $('button[type=submit]', form); btn.disabled = true; $('#formErr').hidden = true;
       try {
         const r = await fetch(`${(window.NI_CFG || {}).api || '/api'}/rest/v1/rpc/contact`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
-          body: JSON.stringify({ p_nombre: n.value.trim(), p_telefono: t.value.trim(), p_email: em.value.trim(), p_empresa: c.value.trim(), p_motivo: form.elements.motivo.value, p_web: form.elements.web.value, p_pagina: document.referrer || '' }) });
+          body: JSON.stringify({ p_nombre: n.value.trim(), p_telefono: t.value.trim(), p_email: em.value.trim(), p_empresa: c.value.trim(), p_asunto: as.value.trim(), p_motivo: form.elements.motivo.value, p_web: form.elements.web.value, p_pagina: document.referrer || '' }) });
         const j = r.ok ? await r.json() : null;
         if (j === 'ok' || j === 'ya') { form.reset(); $('#formOk').hidden = false; }
         else { $('#formErr').hidden = false; }

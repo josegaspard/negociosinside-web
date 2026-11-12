@@ -15,9 +15,17 @@ export default async function panel(K) {
   root.innerHTML = `<div class="pn">
     <aside class="pn-side"><div class="pn-me">${avatar(me.profile.avatar_url, me.profile.display_name)}<div><b>${esc(me.profile.display_name || me.user.email)}</b><span>Administrador</span></div></div>
       <nav class="pn-nav" aria-label="Secciones del panel">${GROUPS.map(([g, tabs]) => `<span class="pn-g">${g}</span>` + tabs.map(([k, n]) => `<a href="#${k}" data-tab="${k}">${n}</a>`).join('')).join('')}</nav>
+      <div class="pn-theme" role="group" aria-label="Tema del panel"><span>Tema</span><button type="button" data-th="light">Claro</button><button type="button" data-th="dark">Oscuro</button></div>
       <a class="pn-out" href="${C.base}">Ver la web</a></aside>
     <section class="pn-main" id="pnMain" tabindex="-1"></section></div>`;
   const main = $('#pnMain');
+  /* tema claro/oscuro (oscuro por defecto, se recuerda en este navegador) */
+  const setTheme = (t) => { document.documentElement.dataset.pnTheme = t; try { localStorage.setItem('ni-pn-theme', t); } catch (e) {}
+    $$('[data-th]', root).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.th === t)));
+    const lg = document.querySelector('.brand img'); if (lg) lg.src = lg.src.replace(/logo(-n)?\.webp/, t === 'dark' ? 'logo.webp' : 'logo-n.webp'); };
+  let th0 = 'dark'; try { th0 = localStorage.getItem('ni-pn-theme') || 'dark'; } catch (e) {}
+  setTheme(th0);
+  root.addEventListener('click', (e) => { const b = e.target.closest('[data-th]'); if (b) setTheme(b.dataset.th); });
   const q = async (p) => { const { data, error } = await p; if (error) throw error; return data; };
   const fail = (e) => { main.innerHTML = `<p class="empty">Error: ${esc(e.message || e)}</p>`; };
   const kpi = (n, v, sub) => `<div class="kpi"><span class="kpi-n">${n}</span><span class="kpi-v">${v}</span>${sub ? `<span class="kpi-s">${sub}</span>` : ''}</div>`;
@@ -307,16 +315,73 @@ export default async function panel(K) {
   const PROD = [['idea', 'Idea'], ['agendado', 'Agendado'], ['grabado', 'Grabado'], ['editando', 'Por editar / editando'], ['revision_cliente', 'Revisión del cliente'], ['aceptado', 'Aceptado por el cliente'], ['publicado', 'Publicado']];
   const PRODN = Object.fromEntries(PROD);
   const EVT = { grabacion: 'Grabación', publicacion: 'Publicación', reunion: 'Reunión', otro: 'Otro' };
+  /* ---------- gráficos (HTML/SVG propios, solo datos reales; vacío si no hay) ---------- */
+  const MS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const dshort = (d) => `${+d.slice(8, 10)} ${MS[+d.slice(5, 7) - 1]}`;
+  const dayKey = (v) => new Date(v).toLocaleDateString('sv-SE');
+  const lastDays = (n) => Array.from({ length: n }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (n - 1 - i)); return d.toLocaleDateString('sv-SE'); });
+  const short = (v) => v >= 1e6 ? (v / 1e6).toFixed(1).replace('.', ',') + ' M' : v >= 1e4 ? Math.round(v / 1e3) + ' mil' : n0(v);
+  const card = (t, sub, body, cls = '') => `<section class="cc ${cls}"><header><h3>${t}</h3>${sub ? `<span class="cc-s">${sub}</span>` : ''}</header>${body}</section>`;
+  const none = (t) => `<p class="ch-empty">${t}</p>`;
+  const vbars = (items, fmt = n0) => { const max = Math.max(1, ...items.map((i) => i.v)); const every = Math.ceil(items.length / 8);
+    return `<div class="vb" style="--n:${items.length}">${items.map((it, i) => `<div class="vb-c" title="${esc(it.l)}: ${fmt(it.v)}"><span class="vb-v">${it.v ? fmt(it.v) : ''}</span><i style="height:${it.v ? Math.max(3, it.v / max * 100) : 0}%${it.c ? ';background:' + it.c : ''}"></i><span class="vb-l">${(items.length - 1 - i) % every === 0 ? esc(it.l) : ''}</span></div>`).join('')}</div>`; };
+  const hbars = (items, fmt = n0) => { const max = Math.max(1, ...items.map((i) => i.v)); return `<ul class="hb">${items.map((it, i) => `<li><span class="hb-l">${esc(it.l)}${it.s ? `<small>${esc(it.s)}</small>` : ''}</span><span class="hb-t"><i style="width:${it.v ? Math.max(1.5, it.v / max * 100) : 0}%;background:var(--c${(i % 4) + 1})"></i></span><b>${it.v == null ? '—' : fmt(it.v)}</b></li>`).join('')}</ul>`; };
+  const line = (pts, fmt = n0, col = 'var(--c1)') => { const ys = pts.map((p) => p.y), mn = Math.min(...ys), mx = Math.max(...ys), rg = mx - mn || 1;
+    const xy = pts.map((p, i) => [i / (pts.length - 1) * 100, 36 - (p.y - mn) / rg * 30]); const d = xy.map((c, i) => (i ? 'L' : 'M') + c[0].toFixed(2) + ' ' + c[1].toFixed(2)).join(' ');
+    const dif = ys[ys.length - 1] - ys[0];
+    return `<div class="ln"><div class="ln-hd"><b>${fmt(ys[ys.length - 1])}</b><span class="${dif >= 0 ? 'up' : 'down'}">${dif >= 0 ? '+' : ''}${fmt(dif)} desde ${dshort(pts[0].x)}</span></div>
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="${d} L100 40 L0 40 Z" fill="${col}" opacity=".14"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>
+      <div class="ln-x"><span>${dshort(pts[0].x)}</span><span>${dshort(pts[pts.length - 1].x)}</span></div></div>`; };
+  const donut = (items) => { const tot = items.reduce((a, i) => a + i.v, 0); if (!tot) return null; let acc = 0;
+    const stops = items.filter((i) => i.v).map((i) => { const a = acc / tot * 360; acc += i.v; return `${i.c} ${a}deg ${acc / tot * 360}deg`; }).join(',');
+    return `<div class="dn"><div class="dn-r" style="background:conic-gradient(${stops})"><span><b>${n0(tot)}</b>total</span></div><ul class="dn-k">${items.map((i) => `<li><i style="background:${i.c}"></i>${esc(i.l)}<b>${n0(i.v)}</b></li>`).join('')}</ul></div>`; };
+
   async function podcast() {
     const m0 = today().slice(0, 7) + '-01';
     const [pros, evs, prods, fin, goals] = await Promise.all([
       q(T('prospects').select('estado,tipo')), q(T('events').select('*').gte('fecha', today()).order('fecha').limit(6)),
       q(T('productions').select('id,titulo,empresa,estado,fecha_grabacion').neq('estado', 'publicado').order('fecha_grabacion', { nullsFirst: false })),
       q(T('finance').select('tipo,importe').gte('fecha', m0)), q(T('goals').select('*').order('fecha_limite', { nullsFirst: false }).limit(4))]);
+    const opt = async (p) => { try { return await q(p); } catch (e) { return null; } };   // los gráficos nunca rompen la portada
+    const [pst, soc, subs, news, fin6, prosT] = await Promise.all([
+      opt(T('podcast_stats').select('taken_at,subscribers,views').order('taken_at', { ascending: false }).limit(400)),
+      opt(T('settings').select('value').eq('key', 'social_stats').maybeSingle()),
+      opt(T('subscribers').select('created_at,status').order('created_at', { ascending: true }).limit(5000)),
+      opt(T('news').select('published_at').eq('status', 'published').order('published_at', { ascending: false }).limit(400)),
+      opt(T('finance').select('fecha,tipo,importe').order('fecha', { ascending: false }).limit(2000)),
+      opt(T('prospects').select('created_at,fuente_url').order('created_at', { ascending: false }).limit(2000))]);
     const cnt = (e) => pros.filter((p) => p.estado === e).length;
     const ing = fin.filter((f) => f.tipo === 'ingreso').reduce((a, f) => a + +f.importe, 0), gas = fin.filter((f) => f.tipo === 'gasto').reduce((a, f) => a + +f.importe, 0);
+    /* datos de los gráficos */
+    const yt = {}; (pst || []).forEach((r) => { const k = dayKey(r.taken_at); if (!yt[k]) yt[k] = r; });   // último dato de cada día
+    const ytPts = Object.keys(yt).sort().map((k) => ({ x: k, s: +yt[k].subscribers || 0, v: +yt[k].views || 0 }));
+    const ytLast = ytPts[ytPts.length - 1];
+    const sv = (soc && soc.value) || {}; const redesR = (sv.redes || []).filter((r) => r.valor != null || r.seguidores != null);
+    const alcance = redesR.reduce((a, r) => a + (+r.valor || 0), 0);
+    const actSubs = (subs || []).filter((x) => x.status === 'active');
+    const d30 = lastDays(30); const before = actSubs.filter((x) => dayKey(x.created_at) < d30[0]).length;
+    let run = before; const subsPts = d30.map((k) => { run += actSubs.filter((x) => dayKey(x.created_at) === k).length; return { x: k, y: run }; });
+    const d14 = lastDays(14); const nCount = {}; (news || []).forEach((n) => { if (n.published_at) { const k = dayKey(n.published_at); nCount[k] = (nCount[k] || 0) + 1; } });
+    const webIn = {}; (prosT || []).filter((p) => /^web:/.test(p.fuente_url || '')).forEach((p) => { const k = dayKey(p.created_at); webIn[k] = (webIn[k] || 0) + 1; });
+    const webTot30 = d30.reduce((a, k) => a + (webIn[k] || 0), 0);
+    const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - (5 - i)); return d.toLocaleDateString('sv-SE').slice(0, 7); });
+    const finM = months.map((m) => { const r = (fin6 || []).filter((f) => String(f.fecha).slice(0, 7) === m); return { m, ing: r.filter((f) => f.tipo === 'ingreso').reduce((a, f) => a + +f.importe, 0), gas: r.filter((f) => f.tipo === 'gasto').reduce((a, f) => a + +f.importe, 0) }; });
+    const finAny = finM.some((x) => x.ing || x.gas);
+    const EST = [['sugerido', 'Sugeridas', 'var(--c4)'], ['contactado', 'Contactadas', 'var(--c2)'], ['aceptado', 'Aceptadas', 'var(--c3)'], ['grabado', 'Grabadas', 'var(--c1)'], ['rechazado', 'Rechazadas', 'var(--c5)']];
+    const charts = `<div class="cc-grid">
+      ${card('Audiencia por red', esc(sv.periodo || 'Último mes') + (alcance ? ' · ' + short(alcance) + ' en total' : ''), redesR.length ? hbars(redesR.map((r) => ({ l: r.nombre, s: r.metrica || '', v: r.valor == null ? null : +r.valor }))) : none('Sin cifras de redes todavía. Se rellenan en Redes.'))}
+      ${card('YouTube · suscriptores', 'Lectura diaria del canal', ytPts.length > 1 ? line(ytPts.map((p) => ({ x: p.x, y: p.s }))) : none('Hace falta más de un día de lecturas para dibujar la evolución.'))}
+      ${card('YouTube · visualizaciones', 'Total acumulado del canal', ytPts.length > 1 ? line(ytPts.map((p) => ({ x: p.x, y: p.v })), short, 'var(--c2)') : none('Hace falta más de un día de lecturas.'))}
+      ${card('Prospección por estado', n0(pros.length) + ' empresas en la lista', donut(EST.map(([k, l, c]) => ({ l, c, v: cnt(k) }))) || none('Todavía no hay empresas en Prospección.'))}
+      ${card('Newsletter · suscriptores activos', 'Últimos 30 días', actSubs.length ? line(subsPts) : none('Aún no hay suscriptores activos.'), 'cc-s1')}
+      ${card('Contactos desde la web', 'Formularios de contacto y visitas · 30 días · ' + n0(webTot30), webTot30 ? vbars(d30.map((k) => ({ l: dshort(k), v: webIn[k] || 0 }))) : none('Ningún formulario recibido en los últimos 30 días.'))}
+      ${card('Noticias publicadas', 'Últimos 14 días', d14.some((k) => nCount[k]) ? vbars(d14.map((k) => ({ l: dshort(k), v: nCount[k] || 0 }))) : none('No se ha publicado ninguna noticia en 14 días.'))}
+      ${card('Ingresos y gastos', 'Últimos 6 meses', finAny ? `<div class="fin2">${vbars(finM.map((x) => ({ l: MS[+x.m.slice(5) - 1] + ' · ingresos', v: Math.round(x.ing), c: 'var(--c3)' })), eur.format)}${vbars(finM.map((x) => ({ l: MS[+x.m.slice(5) - 1] + ' · gastos', v: Math.round(x.gas), c: 'var(--c5)' })), eur.format)}</div>` : none('Sin movimientos. Se apuntan en Finanzas.'))}
+      ${card('Tráfico de Google', 'Search Console', none('Propiedad negociosinside.com verificada el 12 nov. Google tarda unos días en dar las primeras cifras.'))}
+    </div>`;
     main.innerHTML = `<h1>El podcast hoy</h1>
-      <div class="kpis">${kpi('Empresas contactadas', n0(cnt('contactado') + cnt('aceptado') + cnt('grabado')), `${n0(cnt('sugerido'))} sugeridas por revisar`)}${kpi('Aceptadas', n0(cnt('aceptado') + cnt('grabado')), `${n0(pros.filter((p) => p.tipo === 'pago').length)} de pago`)}${kpi('En producción', n0(prods.length), `${n0(prods.filter((p) => p.estado === 'editando').length)} por editar`)}${kpi('Resultado del mes', eur.format(ing - gas), `${eur.format(ing)} ingresos · ${eur.format(gas)} gastos`)}</div>
+      <div class="kpis kpis-6">${kpi('Suscriptores YouTube', ytLast ? n0(ytLast.s) : '—', ytPts.length > 1 ? `${ytLast.s - ytPts[0].s >= 0 ? '+' : ''}${n0(ytLast.s - ytPts[0].s)} desde ${dshort(ytPts[0].x)}` : '')}${kpi('Alcance en redes', alcance ? short(alcance) : '—', esc(sv.periodo || ''))}${kpi('Newsletter', n0(actSubs.length), 'suscriptores activos')}${kpi('Empresas contactadas', n0(cnt('contactado') + cnt('aceptado') + cnt('grabado')), `${n0(cnt('aceptado') + cnt('grabado'))} aceptadas · ${n0(cnt('sugerido'))} por revisar`)}${kpi('En producción', n0(prods.length), `${n0(prods.filter((p) => p.estado === 'editando').length)} por editar`)}${kpi('Resultado del mes', eur.format(ing - gas), `${eur.format(ing)} ingresos · ${eur.format(gas)} gastos`)}</div>
+      ${charts}
       <div class="d-2">
         <section><h2 class="pn-h">Próximas fechas</h2><ul class="d-list">${evs.map((e) => `<li><span class="ev-t ev-${e.tipo}">${EVT[e.tipo]}</span><b>${esc(e.titulo)}</b><span class="muted">${fd(e.fecha)}${e.hora ? ' · ' + e.hora.slice(0, 5) : ''}${e.lugar ? ' · ' + esc(e.lugar) : ''}</span><span data-wx="${e.id}"></span></li>`).join('') || '<li class="empty">No hay nada en el calendario. <a class="lnk" href="#calendario">Añadir fecha</a></li>'}</ul></section>
         <section><h2 class="pn-h">Producción pendiente</h2><ul class="d-list">${prods.slice(0, 6).map((p) => `<li><span class="pill">${PRODN[p.estado]}</span><b>${esc(p.titulo)}</b><span class="muted">${esc(p.empresa || '')}${p.fecha_grabacion ? ' · graba ' + fd(p.fecha_grabacion) : ''}</span></li>`).join('') || '<li class="empty">Todo publicado. <a class="lnk" href="#produccion">Nuevo episodio</a></li>'}</ul></section>

@@ -1005,6 +1005,7 @@ a.chip{color:var(--ink-2)}
 .form-c .f{gap:6px}
 .form-c .f input:not([type=radio]){min-height:46px;padding:10px 14px}
 .f-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.f-grid .f-full{grid-column:1/-1}
 .f-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .form-c .err[role=alert] a{color:#fff}
 @media(max-width:860px){.sec-c .contact{grid-template-columns:1fr;gap:24px}}
