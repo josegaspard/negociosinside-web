@@ -11,8 +11,8 @@
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin>
-<script>!function(d,h){h.classList.add('js');try{var a=JSON.parse(localStorage.getItem('ni-auth')||'null');if(a&&(a.user||a.currentSession))h.setAttribute('data-auth','1')}catch(e){}setTimeout(function(){h.classList.add('rv-all')},3500)}(document,document.documentElement);window.NI_CFG={api:"https://negociosinside-api.josegaspard.dev",anon:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJuZWdvY2lvc2luc2lkZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzk0MzUyMjUwLCJleHAiOjIxMDk3MTIyNTB9.7yWpW1ps2Jj0mqGCmVroxieddVMJvwfuAO4z-3uXJRQ",base:"/",v:"13",mail:"busiinessshark@gmail.com"};</script>
-<link rel="stylesheet" href="/assets/site.css?v=13">
+<script>!function(d,h){h.classList.add('js');try{var a=JSON.parse(localStorage.getItem('ni-auth')||'null');if(a&&(a.user||a.currentSession))h.setAttribute('data-auth','1')}catch(e){}setTimeout(function(){h.classList.add('rv-all')},3500)}(document,document.documentElement);window.NI_CFG={api:"/api",anon:"cookie",base:"/",v:"15",mail:"hola@negociosinside.com"};</script>
+<link rel="stylesheet" href="/assets/site.css?v=15">
 
 </head>
 <body>
@@ -21,28 +21,28 @@
 <header class="hdr" id="hdr">
  <div class="hdr-in">
   <a class="brand" href="/" aria-label="Negocios Inside, inicio"><img src="/img/logo-n.webp" alt="Negocios Inside" width="150" height="48"></a>
-  <nav class="nav" id="nav" aria-label="Principal"><a href="/episodios/">Episodios</a><a href="/noticias/">Noticias</a><a href="/para-empresas/">Para empresas</a><a href="/nuestro-podcast/">Nuestro podcast</a><a href="/quienes-somos/">Quiénes somos</a><a class="nav-acc" href="/cuenta/"><svg class="acc-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span class="acc-l1">Entrar</span><span class="acc-l2">Mi cuenta</span></a><a class="btn btn-y nav-cta" href="/para-empresas/">Crea tu podcast</a></nav>
+  <nav class="nav" id="nav" aria-label="Principal"><a href="/episodios/">Episodios</a><a href="/noticias/">Noticias</a><a href="/nuestro-podcast/">Nuestro podcast</a><a href="/quienes-somos/">Quiénes somos</a><a href="/contacto/">Contacto</a><a class="nav-acc" href="/cuenta/"><svg class="acc-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span class="acc-l1">Entrar</span><span class="acc-l2">Mi cuenta</span></a><a class="btn btn-y nav-cta" href="/para-empresas/">Crea tu podcast</a></nav>
   <button class="burger" id="burger" aria-expanded="false" aria-controls="nav" aria-label="Abrir menú"><span></span><span></span></button>
  </div>
 </header>
 <main id="main">
 
-<section class="pg-hd"><div class="wrap"><h1>Contacto</h1><p>Para crear el podcast de tu empresa, proponer tu empresa o patrocinar. Al enviar se abre tu correo con el mensaje ya escrito para busiinessshark@gmail.com.</p></div></section>
-<section class="sec sec-tight"><div class="wrap contact">
-<form class="form" id="form" novalidate>
- <div class="f"><label for="f-n">Nombre</label><input id="f-n" name="nombre" autocomplete="name" required><span class="err" id="e-n"></span></div>
- <div class="f"><label for="f-e">Correo</label><input id="f-e" name="email" type="email" autocomplete="email" required><span class="err" id="e-e"></span></div>
- <div class="f"><label for="f-c">Empresa</label><input id="f-c" name="empresa" autocomplete="organization"></div>
- <fieldset class="f"><legend>Qué te interesa</legend><div class="opts">
-  <label><input type="radio" name="motivo" value="produccion" checked><span>Crear el podcast de mi empresa</span></label>
-  <label><input type="radio" name="motivo" value="visita"><span>Que entréis en mi empresa</span></label>
-  <label><input type="radio" name="motivo" value="patrocinio"><span>Patrocinar un episodio</span></label>
-  <label><input type="radio" name="motivo" value="otro"><span>Otra cosa</span></label></div></fieldset>
- <div class="f"><label for="f-m">Mensaje</label><textarea id="f-m" name="mensaje" rows="5" required placeholder="Qué hace tu empresa y qué te gustaría enseñar"></textarea><span class="err" id="e-m"></span></div>
- <button class="btn btn-y" type="submit">Enviar mensaje</button>
- <p class="form-ok" id="formOk" role="status" hidden>Se ha abierto tu correo con el mensaje listo. Si no se abre, escríbenos a <a href="mailto:busiinessshark@gmail.com">busiinessshark@gmail.com</a>.</p>
+<section class="pg-hd pg-hd-c"><div class="wrap"><h1>Contacto</h1><p>¿Quieres crear el podcast de tu empresa, que la visitemos o patrocinar un episodio? Déjanos tus datos y te escribimos.</p></div></section>
+<section class="sec sec-tight sec-c"><div class="wrap contact">
+<form class="form form-c" id="form" novalidate>
+ <input type="hidden" name="motivo" value="contacto">
+ <div class="f-hp" aria-hidden="true"><label for="f-w">Web</label><input id="f-w" name="web" tabindex="-1" autocomplete="off"></div>
+ <div class="f-grid">
+  <div class="f"><label for="f-n">Nombre</label><input id="f-n" name="nombre" autocomplete="name" required><span class="err" id="e-n"></span></div>
+  <div class="f"><label for="f-t">Teléfono</label><input id="f-t" name="telefono" type="tel" autocomplete="tel" inputmode="tel" required><span class="err" id="e-t"></span></div>
+  <div class="f"><label for="f-e">Correo</label><input id="f-e" name="email" type="email" autocomplete="email" required><span class="err" id="e-e"></span></div>
+  <div class="f"><label for="f-c">Empresa</label><input id="f-c" name="empresa" autocomplete="organization" required><span class="err" id="e-c"></span></div>
+ </div>
+ <button class="btn btn-y" type="submit">Enviar</button>
+ <p class="form-ok" id="formOk" role="status" hidden>¡Recibido! Te escribimos muy pronto.</p>
+ <p class="err" id="formErr" role="alert" hidden>No se pudo enviar. Escríbenos a <a href="mailto:hola@negociosinside.com">hola@negociosinside.com</a>.</p>
 </form>
-<aside class="contact-side"><h2>También estamos en</h2><ul class="links"><li><a href="https://www.youtube.com/@Negociosinside" rel="noopener" target="_blank">YouTube</a></li><li><a href="https://www.linkedin.com/company/negociosinside/" rel="noopener" target="_blank">LinkedIn</a></li><li><a href="https://www.instagram.com/negociosinside/" rel="noopener" target="_blank">Instagram</a></li><li><a href="https://www.tiktok.com/@negociosinside" rel="noopener" target="_blank">TikTok</a></li></ul><p class="muted">Correo directo: <a href="mailto:busiinessshark@gmail.com">busiinessshark@gmail.com</a></p></aside>
+<aside class="contact-side"><h2>También estamos en</h2><ul class="links"><li><a href="https://www.youtube.com/@Negociosinside" rel="noopener" target="_blank">YouTube</a></li><li><a href="https://www.linkedin.com/company/negociosinside/" rel="noopener" target="_blank">LinkedIn</a></li><li><a href="https://www.instagram.com/negociosinside/" rel="noopener" target="_blank">Instagram</a></li><li><a href="https://www.tiktok.com/@negociosinside" rel="noopener" target="_blank">TikTok</a></li></ul><p class="muted">Correo directo: <a href="mailto:hola@negociosinside.com">hola@negociosinside.com</a></p></aside>
 </div></section>
 </main>
 <footer class="ftr">
@@ -50,12 +50,12 @@
   <div class="ftr-brand"><img src="/img/logo.webp" alt="Negocios Inside" width="170" height="54" loading="lazy"><p>El podcast de empresas y negocios y un medio de actualidad para quien tiene o quiere montar un negocio en España.</p></div>
   <div class="ftr-col"><h2>Explora</h2><a href="/episodios/">Episodios</a><a href="/noticias/">Noticias</a><a href="/para-empresas/">Para empresas</a><a href="/nuestro-podcast/">Nuestro podcast</a><a href="/quienes-somos/">Quiénes somos</a><a href="/contacto/">Contacto</a><a href="/cuenta/">Mi cuenta</a></div>
   <div class="ftr-col"><h2>Síguenos</h2><a href="https://www.youtube.com/@Negociosinside" rel="noopener" target="_blank">YouTube</a><a href="https://www.linkedin.com/company/negociosinside/" rel="noopener" target="_blank">LinkedIn</a><a href="https://www.instagram.com/negociosinside/" rel="noopener" target="_blank">Instagram</a><a href="https://www.tiktok.com/@negociosinside" rel="noopener" target="_blank">TikTok</a></div>
-  <div class="ftr-col"><h2>La newsletter</h2><form class="ftr-nl" data-nl="pie" novalidate><label class="sr" for="nlF">Tu correo</label><div class="row"><input id="nlF" type="email" placeholder="tu@correo.com" autocomplete="email" required><button class="btn btn-y btn-sm">Suscribirme</button></div><p class="nl-msg" aria-live="polite"></p></form><a href="mailto:busiinessshark@gmail.com">busiinessshark@gmail.com</a></div>
+  <div class="ftr-col"><h2>La newsletter</h2><form class="ftr-nl" data-nl="pie" novalidate><label class="sr" for="nlF">Tu correo</label><div class="row"><input id="nlF" type="email" placeholder="tu@correo.com" autocomplete="email" required><button class="btn btn-y btn-sm">Suscribirme</button></div><p class="nl-msg" aria-live="polite"></p></form><a href="mailto:hola@negociosinside.com">hola@negociosinside.com</a></div>
  </div>
  <div class="wrap ftr-base"><span>© 2026 Negocios Inside</span></div>
 </footer>
 <dialog class="player" id="player" aria-label="Reproductor de vídeo"><div class="player-box"><button class="player-x" id="playerX" aria-label="Cerrar vídeo">×</button><div class="player-frame" id="playerFrame"></div></div></dialog>
-<script src="/assets/site.js?v=13" defer></script>
-<script src="/assets/app.js?v=13" defer></script>
+<script src="/assets/site.js?v=15" defer></script>
+<script src="/assets/app.js?v=15" defer></script>
 </body>
 </html>

@@ -46,7 +46,7 @@
     const make = () => res(window.supabase.createClient(C.api, C.anon, { auth: { storageKey: 'ni-auth', flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } }));
     if (window.supabase) return make();
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js';
+    s.src = C.base + 'assets/sb.js?v=' + C.v;
     s.onload = make; s.onerror = () => rej(new Error('No se pudo cargar el acceso')); document.head.appendChild(s);
   }));
   const html = document.documentElement;
@@ -91,8 +91,7 @@
     return 'No se pudo completar. Inténtalo de nuevo.';
   };
   const G_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.7V6.6h-4a12 12 0 0 0 0 10.8z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.5 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>';
-  const X_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.9 1.2h3.7l-8 9.2L24 22.8h-7.4l-5.8-7.6-6.6 7.6H.5l8.6-9.8L0 1.2h7.6l5.2 6.9zm-1.3 19.4h2L6.5 3.3H4.3z"/></svg>';
-  const socialBtns = (to) => `<button class="sbtn" data-oauth="google" data-to="${esc(to || '')}">${G_ICO}<span>Continuar con Google</span></button><button class="sbtn sbtn-x" data-oauth="x" data-to="${esc(to || '')}">${X_ICO}<span>Continuar con X</span></button>`;
+  const socialBtns = (to) => `<button class="sbtn" data-oauth="google" data-to="${esc(to || '')}">${G_ICO}<span>Continuar con Google</span></button>`;
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-oauth]'); if (!b) return;
     e.preventDefault(); b.disabled = true; oauth(b.dataset.oauth, b.dataset.to || location.href).finally(() => setTimeout(() => (b.disabled = false), 4000));
@@ -154,6 +153,7 @@
       so.redes.forEach((r) => {
         const c = $(`[data-net="${r.id}"]`, stats); if (!c) return;
         const v = +r.valor || 0; $('.net-v', c).textContent = nf.format(v);
+        const nm = $('.net-m', c); if (nm && r.metrica) nm.textContent = `${r.metrica} · ${String(r.periodo_red || so.periodo || 'último mes').toLowerCase()}`;
         $('.net-bar i', c).style.width = Math.max(1.5, 100 * v / tot).toFixed(1) + '%';
         $('.net-p', c).textContent = `${(100 * v / tot).toFixed(1).replace('.', ',')} % del total${r.seguidores ? ' · ' + nf.format(r.seguidores) + ' seguidores' : ''}`;
       });

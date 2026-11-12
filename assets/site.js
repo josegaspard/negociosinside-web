@@ -60,9 +60,11 @@
       // caja visible del viewBox 1600x1000 con "slice"
       const s = Math.max(vw / 1600, vh / 1000);
       const visW = vw / s, visH = vh / s, x0v = (1600 - visW) / 2, y0v = (1000 - visH) / 2;
-      const base = mob ? visW * 0.66 / 240 : visH / 615;
+      // móvil: la cerradura cabe entre la cabecera y el titular (sin pisarlo)
+      const av = copy.offsetTop - 78, kp = Math.min(vw * 0.66 / 240, av / 480);
+      const base = mob ? kp / s : visH / 615;
       const bx = mob ? 800 : x0v + visW * 0.74;
-      const by = mob ? y0v + visH * 0.1 + 180 * base : y0v + visH * 0.54 - 60 * base;
+      const by = mob ? y0v + (68 + Math.max(0, (av - 480 * kp) / 2) + 180 * kp) / s : y0v + visH * 0.54 - 60 * base;
       const span = hero.offsetHeight - vh;
       const p = RM ? 0 : Math.min(1, Math.max(0, scrollY / span));
       const e = ease(p);
@@ -205,28 +207,30 @@
     if (m) apply(m.dataset.f);
   }
 
-  /* contacto: valida y abre el correo con el mensaje escrito */
+  /* contacto: valida y envía a hola@negociosinside.com (rpc/contact en el motor PHP) */
   const form = $('#form');
   if (form) {
-    const q = new URLSearchParams(location.search).get('motivo');
-    if (q) { const r = $(`input[name=motivo][value="${q}"]`, form); if (r) r.checked = true; }
-    const labels = { visita: 'Quiero que entréis en mi empresa', patrocinio: 'Patrocinar un episodio', produccion: 'Producir mi videopodcast', otro: 'Contacto' };
+    const mot = new URLSearchParams(location.search).get('motivo');
+    if (mot) form.elements.motivo.value = mot;
     const setErr = (inp, id, msg) => { $(id).textContent = msg; inp.setAttribute('aria-invalid', msg ? 'true' : 'false'); if (msg) inp.setAttribute('aria-describedby', id.slice(1)); };
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const n = $('#f-n'), em = $('#f-e'), ms = $('#f-m');
-      let ok = true;
-      setErr(n, '#e-n', n.value.trim() ? '' : 'Escribe tu nombre.'); ok = ok && !!n.value.trim();
-      const ve = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim());
-      setErr(em, '#e-e', ve ? '' : 'Escribe un correo válido, por ejemplo nombre@empresa.com.'); ok = ok && ve;
-      setErr(ms, '#e-m', ms.value.trim().length > 9 ? '' : 'Cuéntanos un poco más (mínimo 10 caracteres).'); ok = ok && ms.value.trim().length > 9;
-      if (!ok) { $('[aria-invalid=true]', form).focus(); return; }
-      const mot = $('input[name=motivo]:checked', form).value;
-      const emp = $('#f-c').value.trim();
-      const subject = `${labels[mot]}${emp ? ' · ' + emp : ''}`;
-      const bodyTxt = `Nombre: ${n.value.trim()}\nCorreo: ${em.value.trim()}\nEmpresa: ${emp || '-'}\nMotivo: ${labels[mot]}\n\n${ms.value.trim()}`;
-      location.href = `mailto:busiinessshark@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyTxt)}`;
-      $('#formOk').hidden = false;
+      const n = $('#f-n'), t = $('#f-t'), em = $('#f-e'), c = $('#f-c');
+      const ve = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.value.trim()), vt = t.value.replace(/\D/g, '').length >= 7;
+      setErr(n, '#e-n', n.value.trim() ? '' : 'Escribe tu nombre.');
+      setErr(t, '#e-t', vt ? '' : 'Escribe un teléfono válido.');
+      setErr(em, '#e-e', ve ? '' : 'Escribe un correo válido.');
+      setErr(c, '#e-c', c.value.trim() ? '' : 'Escribe el nombre de tu empresa.');
+      const bad = $('[aria-invalid=true]', form); if (bad) { bad.focus(); return; }
+      const btn = $('button[type=submit]', form); btn.disabled = true; $('#formErr').hidden = true;
+      try {
+        const r = await fetch(`${(window.NI_CFG || {}).api || '/api'}/rest/v1/rpc/contact`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ p_nombre: n.value.trim(), p_telefono: t.value.trim(), p_email: em.value.trim(), p_empresa: c.value.trim(), p_motivo: form.elements.motivo.value, p_web: form.elements.web.value, p_pagina: document.referrer || '' }) });
+        const j = r.ok ? await r.json() : null;
+        if (j === 'ok' || j === 'ya') { form.reset(); $('#formOk').hidden = false; }
+        else { $('#formErr').hidden = false; }
+      } catch (err) { $('#formErr').hidden = false; }
+      btn.disabled = false;
     });
   }
 })();
